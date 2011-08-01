@@ -1,0 +1,13 @@
+{application, restcp,
+ [
+  {description, "RESTCP - REST Configurable TCP Proxy"},
+  {vsn, "0.37"},
+  {modules, []},
+  {registered, [restcp_server]},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, {restcp_app, []}},
+  {env, []}
+ ]}.
