@@ -38,26 +38,21 @@ init([{App, Route}]) ->
 handle_call(Call, _From, State) ->
   {reply, Call, State}.
 
-handle_cast({connect, FrontendSock}, State) ->
-  BackendSock = init_backend(State),
-  % {active, true} feels dirty, but we are just a pipe. who needs flow control?
-  inet:setopts(FrontendSock, [{active, true}]),
-  inet:setopts(BackendSock, [{active, true}]),
-  {noreply, State#state{backend_sock = BackendSock,
-                        frontend_sock = FrontendSock}}.
+handle_cast(_, State) ->
+  {noreply, State}.
 
 handle_info({tcp, FrontendSock, Data},
     #state{frontend_sock = FrontendSock,
            backend_sock = BackendSock} = State) ->
   gen_tcp:send(BackendSock, Data),
-  % If we are reciving on {active, once}, reset once here.
+  inet:setopts(FrontendSock, [{active, once}]),
   {noreply, State};
 
 handle_info({tcp, BackendSock, Data},
     #state{frontend_sock = FrontendSock,
            backend_sock = BackendSock} = State) ->
   gen_tcp:send(FrontendSock, Data),
-  % If we are reciving on {active, once}, reset once here.
+  inet:setopts(BackendSock, [{active, once}]),
   {noreply, State};
 
 handle_info({tcp_closed, _},
@@ -66,6 +61,13 @@ handle_info({tcp_closed, _},
   gen_tcp:close(FrontendSock),
   gen_tcp:close(BackendSock),
   {stop, normal, State};
+
+handle_info({socket_ready, FrontendSock}, State) ->
+  BackendSock = init_backend(State),
+  inet:setopts(FrontendSock, [{active, once}]),
+  inet:setopts(BackendSock, [{active, once}]),
+  {noreply, State#state{backend_sock = BackendSock,
+                        frontend_sock = FrontendSock}};
 
 handle_info(Info, State) ->
   io:format("Other info: ~p with state ~p~n", [Info, State]),

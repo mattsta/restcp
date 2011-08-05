@@ -146,7 +146,7 @@ add_route(Routes, App, RouteId, Frontend, FrontendPid) ->
 delete_route(Routes, Backends, App, Route) ->
   RouteKey = app_route(App, Route),
   case ets:lookup(Routes, RouteKey) of
-    [#route{proxy = ProxyPid}] -> exit(ProxyPid, shutdown);
+    [#route{proxy = ProxyPid}] -> oneshot_sup:stop_oneshot(ProxyPid);
                              _ -> ok
   end,
   ets:delete(Routes, RouteKey),
@@ -174,6 +174,6 @@ increment(CounterTable, CounterKey) ->
   end.
 
 spawn_frontend(RouteId, {ListenIP, ListenPort}) ->
-  {ok, Pid} = restcp_proxy:start(RouteId, ListenIP, ListenPort),
-  gen_server:cast(Pid, listen),
+  {ok, Pid} = oneshot_sup:start_oneshot(ListenIP, ListenPort,
+                                 restcp_pipe, start, [RouteId]),
   Pid.

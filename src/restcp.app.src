@@ -1,7 +1,7 @@
 {application, restcp,
  [
   {description, "RESTCP - REST Configurable TCP Proxy"},
-  {vsn, "0.37"},
+  {vsn, "0.77"},
   {modules, []},
   {registered, [restcp_server]},
   {applications, [

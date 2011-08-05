@@ -43,6 +43,11 @@ init([]) ->
 
   WebConfig = [{ip, IP}, {port, Port}, {log_dir, LogDir},
                {dispatch, Dispatch}],
+
+  OneshotSup = {oneshot_sup,
+                {oneshot_sup, start_link, []},
+                permanent, 5000, supervisor, dynamic},
+
   RESTCP = {restcp_server,
             {restcp_server, start_link, []},
             permanent, 5000, worker, dynamic},
@@ -51,7 +56,8 @@ init([]) ->
         {webmachine_mochiweb, start, [WebConfig]},
          permanent, 5000, worker, dynamic},
 
-  Processes = [RESTCP,
+  Processes = [OneshotSup,
+               RESTCP,
                Web],
 
   Strategy = {one_for_one, 10, 10},
